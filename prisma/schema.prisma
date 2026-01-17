@@ -13,14 +13,29 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(uuid())
+  id         String     @id @default(uuid())
   first_name String
   last_name  String
-  role       Role     @default(buyer)
-  email      String   @unique
+  role       Role       @default(buyer)
+  email      String     @unique
   password   String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  status     UserStatus @default(active)
+
+  orders           Order[] @relation("Buyer")
+  sold_orders      Order[] @relation("Seller")
+  delivered_orders Order[] @relation("Rider")
+  wallet           Wallet? @relation("UserWallet")
+
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @updatedAt
+  dispatchAttempts DispatchAttempt[]
+  notifications    Notification[]
+}
+
+enum UserStatus {
+  active
+  suspended
+  deleted
 }
 
 enum Role {
@@ -28,4 +43,93 @@ enum Role {
   seller
   rider
   admin
+}
+
+model Address {
+  id             String  @id @default(uuid())
+  label          String
+  latitude       Float
+  longitude      Float
+  full_address   String
+  pickup_orders  Order[] @relation("PickupAddress")
+  dropoff_orders Order[] @relation("DropoffAddress")
+}
+
+model Order {
+  id           String      @id @default(uuid())
+  distance_km  Float
+  delivery_fee Float
+  platform_fee Float
+  status       OrderStatus @default(created)
+
+  pickup_address_id  String
+  pickup_address     Address @relation("PickupAddress", fields: [pickup_address_id], references: [id])
+  dropoff_address_id String
+  dropoff_address    Address @relation("DropoffAddress", fields: [dropoff_address_id], references: [id])
+  buyer_id           String?
+  buyer              User?   @relation("Buyer", fields: [buyer_id], references: [id])
+  seller_id          String?
+  seller             User?   @relation("Seller", fields: [seller_id], references: [id])
+  rider_id           String?
+  rider              User?   @relation("Rider", fields: [rider_id], references: [id])
+
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @updatedAt
+  dispatchAttempts DispatchAttempt[]
+}
+
+enum OrderStatus {
+  created
+  paid
+  assigned
+  picked_up
+  in_transit
+  delivered
+  completed
+  cancelled
+}
+
+model Wallet {
+  id         String   @id @default(uuid())
+  user_id    String   @unique
+  user       User     @relation("UserWallet", fields: [user_id], references: [id])
+  balance    Float    @default(0)
+  currency   String   @default("NGN")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model DispatchAttempt {
+  id         String                @id @default(uuid())
+  status     DispatchAttemptStatus @default(pending)
+  order_id   String
+  order      Order                 @relation(fields: [order_id], references: [id])
+  rider_id   String
+  rider      User                  @relation(fields: [rider_id], references: [id])
+  created_at DateTime              @default(now())
+  updated_at DateTime              @updatedAt
+}
+
+enum DispatchAttemptStatus {
+  pending
+  accepted
+  rejected
+  timeout
+}
+
+model Notification {
+  id         String           @id @default(uuid())
+  user_id    String
+  user       User             @relation(fields: [user_id], references: [id])
+  type       NotificationType
+  title      String
+  message    String
+  is_sent    Boolean          @default(false)
+  created_at DateTime         @default(now())
+}
+
+enum NotificationType {
+  sms
+  email
+  push
 }
