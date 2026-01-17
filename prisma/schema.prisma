@@ -13,23 +13,54 @@ datasource db {
 }
 
 model User {
-  id         String     @id @default(uuid())
-  first_name String
-  last_name  String
-  role       Role       @default(buyer)
-  email      String     @unique
-  password   String
-  status     UserStatus @default(active)
+  id           String     @id @default(uuid())
+  role         Role       @default(buyer)
+  email        String     @unique
+  phone_number String
+  password     String
+  status       UserStatus @default(active)
 
-  orders           Order[] @relation("Buyer")
-  sold_orders      Order[] @relation("Seller")
-  delivered_orders Order[] @relation("Rider")
-  wallet           Wallet? @relation("UserWallet")
+  orders           Order[]       @relation("Buyer")
+  sold_orders      Order[]       @relation("Seller")
+  delivered_orders Order[]       @relation("Rider")
+  wallet           Wallet?       @relation("UserWallet")
+  profile          UserProfile?  @relation("UserProfile")
+  rider_profile    RiderProfile? @relation("RiderProfile")
 
   created_at       DateTime          @default(now())
   updated_at       DateTime          @updatedAt
   dispatchAttempts DispatchAttempt[]
   notifications    Notification[]
+}
+
+model UserProfile {
+  id              String   @id @default(uuid())
+  first_name      String
+  last_name       String
+  profile_picture String?
+  user_id         String   @unique
+  user            User     @relation("UserProfile", fields: [user_id], references: [id])
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+}
+
+model RiderProfile {
+  id             String      @id @default(uuid())
+  rider_id       String      @unique
+  rider          User        @relation("RiderProfile", fields: [rider_id], references: [id])
+  is_verified    Boolean     @default(false)
+  is_available   Boolean     @default(true)
+  rating         Float       @default(0)
+  vehicle_type   VehicleType @default(bike)
+  license_number String
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
+}
+
+enum VehicleType {
+  bike
+  car
+  van
 }
 
 enum UserStatus {
