@@ -1,8 +1,19 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Post, UseGuards, Request } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import {
+  UserProfileDto,
+  RiderProfileDto,
+} from './dto/complete-profile.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -25,5 +36,18 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
+  }
+
+  @Post('complete-profile')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Complete user profile after registration' })
+  @ApiResponse({ status: 201, description: 'Profile successfully created' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiBody({ type: Object })
+  completeProfile(@Request() req: any, @Body() profileDto: UserProfileDto | RiderProfileDto) {
+    const userId = req.user?.id;
+    return this.authService.completeProfile(userId, profileDto);
   }
 }
