@@ -1,24 +1,26 @@
-import { Body, Controller, Post, UseGuards, Request } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiOperation,
   ApiResponse,
   ApiTags,
-  ApiBearerAuth,
 } from '@nestjs/swagger';
+import * as client from '@prisma/client';
+import { CurrentUser } from 'src/common/decorators/current-user';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
 import {
-  UserProfileDto,
   RiderProfileDto,
+  UserProfileDto,
 } from './dto/complete-profile.dto';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { JwtAuthGuard } from './guards/jwt.guard';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
@@ -39,15 +41,14 @@ export class AuthController {
   }
 
   @Post('complete-profile')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Complete user profile after registration' })
   @ApiResponse({ status: 201, description: 'Profile successfully created' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiBody({ type: Object })
-  completeProfile(@Request() req: any, @Body() profileDto: UserProfileDto | RiderProfileDto) {
-    const userId = req.user?.id;
-    return this.authService.completeProfile(userId, profileDto);
+  completeProfile(@CurrentUser() user: client.User, @Body() profileDto: UserProfileDto | RiderProfileDto) {
+    return this.authService.completeProfile(user.id, profileDto);
   }
 }

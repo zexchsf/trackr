@@ -20,7 +20,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenService: TokenService,
-  ) {}
+  ) { }
 
   async register(registerDto: RegisterDto) {
     try {
@@ -58,7 +58,8 @@ export class AuthService {
         include: {
           profile: true,
           rider_profile: true,
-        }
+          wallet: true,
+        },
       });
 
       if (!user) {
@@ -71,7 +72,7 @@ export class AuthService {
         }
 
         const riderDto = profileDto as RiderProfileDto;
-        
+
         await this.prisma.userProfile.create({
           data: {
             user_id: userId,
@@ -88,6 +89,17 @@ export class AuthService {
             license_number: riderDto.license_number,
           },
         });
+
+        // Create wallet if it doesn't exist
+        if (!user.wallet) {
+          await this.prisma.wallet.create({
+            data: {
+              user_id: userId,
+              balance: 0,
+            },
+          });
+        }
+
         return riderProfile;
       } else {
         if (user.profile) {
@@ -102,6 +114,17 @@ export class AuthService {
             profile_picture: profileDto.profile_picture,
           },
         });
+
+        // Create wallet if it doesn't exist
+        if (!user.wallet) {
+          await this.prisma.wallet.create({
+            data: {
+              user_id: userId,
+              balance: 0,
+            },
+          });
+        }
+
         return userProfile;
       }
     } catch (error) {
