@@ -3,7 +3,7 @@ import { Reflector } from "@nestjs/core";
 import { Role } from "@prisma/client";
 import { ROLES_KEY } from "../decorators/roles.decorator";
 
-export class RoleGuard implements CanActivate {
+export class RolesGuard implements CanActivate {
    constructor(private readonly reflector: Reflector) { }
 
    canActivate(context: ExecutionContext): boolean {

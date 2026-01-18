@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TokenModule } from './token/token.module';
 import { WalletModule } from './wallet/wallet.module';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { WalletModule } from './wallet/wallet.module';
     AuthModule,
     TokenModule,
     WalletModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [AppService],
